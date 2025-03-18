@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Product Editing Demo</title>
+  <style>
+    /* Basic Reset */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      color: #333;
+    }
+    header {
+      background: #b30000; /* Canadian red */
+      color: #fff;
+      padding: 1em;
+      text-align: center;
+    }
+    .container {
+      display: flex;
+      height: calc(100vh - 70px);
+    }
+    .sidebar {
+      width: 300px;
+      background: #fff;
+      border-right: 1px solid #ddd;
+      padding: 1em;
+      overflow-y: auto;
+    }
+    .content {
+      flex: 1;
+      padding: 1em 2em;
+      overflow-y: auto;
+    }
+    /* Search and Sorting */
+    .search-filters input {
+      width: 100%;
+      padding: 0.5em;
+      margin-bottom: 0.5em;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .sort-filters {
+      margin-bottom: 1em;
+    }
+    .sort-filters button {
+      background: #b30000;
+      color: #fff;
+      border: none;
+      padding: 0.5em 1em;
+      margin-right: 0.5em;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .sort-filters button.active {
+      background: #800000;
+    }
+    /* Product List */
+    .product-list {
+      margin-bottom: 1em;
+    }
+    .product-item {
+      display: flex;
+      align-items: center;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-bottom: 0.75em;
+      padding: 0.5em;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .product-item:hover {
+      background: #f0f0f0;
+    }
+    .product-item.selected {
+      background: #e6e6e6;
+    }
+    .product-item img {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 4px;
+      margin-right: 0.75em;
+    }
+    .product-details {
+      flex: 1;
+    }
+    .product-details p {
+      margin-bottom: 0.25em;
+      font-size: 0.9em;
+    }
+    #load-more {
+      width: 100%;
+      padding: 0.75em;
+      background: #b30000;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    /* Form Styling */
+    form {
+      background: #fff;
+      padding: 1em;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+    form section {
+      margin-bottom: 1em;
+      padding-bottom: 1em;
+      border-bottom: 1px solid #ccc;
+    }
+    form section:last-child {
+      border-bottom: none;
+    }
+    form h2 {
+      margin-bottom: 0.5em;
+      color: #b30000;
+      font-size: 1.2em;
+    }
+    form label {
+      display: block;
+      margin-bottom: 0.5em;
+    }
+    form input[type="text"],
+    form input[type="number"],
+    form textarea {
+      width: 100%;
+      padding: 0.5em;
+      margin-top: 0.25em;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    form input[type="checkbox"] {
+      margin-right: 0.5em;
+    }
+    form button[type="submit"] {
+      background: #b30000;
+      color: #fff;
+      border: none;
+      padding: 0.75em 1.5em;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1em;
+    }
+    #message {
+      margin-top: 1em;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Product Editing Demo</h1>
+  </header>
+  <div class="container">
+    <!-- Sidebar with search, sorting, and product list -->
+    <div class="sidebar">
+      <div class="search-filters">
+        <input type="text" id="search-barcode" placeholder="Search by Barcode">
+        <input type="text" id="search-product" placeholder="Search by Product">
+        <input type="text" id="search-parent" placeholder="Search by Parent Company">
+      </div>
+      <div class="sort-filters">
+        <button data-sort="recent">Recent</button>
+        <button data-sort="popular">Popular</button>
+        <button data-sort="canadian">Canadian</button>
+        <button data-sort="verified">Verified</button>
+        <button data-sort="sponsored">Sponsored</button>
+      </div>
+      <div class="product-list" id="product-list">
+        <!-- Dynamically populated -->
+      </div>
+      <button id="load-more">Load More</button>
+    </div>
+    <!-- Content area with the product editing form -->
+    <div class="content">
+      <form id="product-form">
+        <!-- Product Info Section -->
+        <section>
+          <h2>Product Info</h2>
+          <label>Barcode:
+            <input type="text" id="product-barcode" readonly>
+          </label>
+          <label>Product Name:
+            <input type="text" id="product-name">
+          </label>
+          <label>Brand:
+            <input type="text" id="product-brand">
+          </label>
+          <label>Product Tags (comma-separated):
+            <input type="text" id="product-tags">
+          </label>
+        </section>
+        <!-- Parent Company Section -->
+        <section>
+          <h2>Parent Company Info</h2>
+          <label>Parent Company Name:
+            <input type="text" id="parent-company-name">
+          </label>
+          <label>Parent Company Description:
+            <textarea id="parent-company-description"></textarea>
+          </label>
+          <label>Country of Registration:
+            <input type="text" id="parent-company-country">
+          </label>
+          <label>Country Code:
+            <input type="text" id="parent-company-code">
+          </label>
+          <label>Result Confidence:
+            <input type="text" id="parent-company-confidence">
+          </label>
+          <label>Explanation:
+            <textarea id="parent-company-explanation"></textarea>
+          </label>
+          <label>Company Tags (comma-separated):
+            <input type="text" id="company-tags">
+          </label>
+        </section>
+        <!-- Manufacturing Info Section -->
+        <section>
+          <h2>Manufacturing Info</h2>
+          <label>Percentage Canadian:
+            <input type="number" id="percentage-canadian">
+          </label>
+          <label>Label:
+            <input type="text" id="label">
+          </label>
+          <label>Label Description:
+            <textarea id="label-description"></textarea>
+          </label>
+          <label>Manufacturing Result Confidence:
+            <input type="text" id="manufacturing-confidence">
+          </label>
+          <label>Label Explanation:
+            <textarea id="label-explanation"></textarea>
+          </label>
+        </section>
+        <!-- Metadata Section -->
+        <section>
+          <h2>Metadata</h2>
+          <label>Image URL:
+            <input type="text" id="image-url">
+          </label>
+          <label>
+            <input type="checkbox" id="verified">
+            Verified
+          </label>
+          <label>
+            <input type="checkbox" id="sponsored">
+            Sponsored
+          </label>
+          <label>Num Scans:
+            <input type="number" id="num-scans">
+          </label>
+          <label>Positive Ratings:
+            <input type="number" id="positive-ratings">
+          </label>
+          <label>Negative Ratings:
+            <input type="number" id="negative-ratings">
+          </label>
+          <label>
+            <input type="checkbox" id="product-exists">
+            Product Exists
+          </label>
+        </section>
+        <!-- Read-Only System Metadata Section -->
+        <section>
+          <h2>System Metadata (Read-Only)</h2>
+          <label>Date Generated:
+            <input type="text" id="date-generated" readonly>
+          </label>
+          <label>Cost To Generate:
+            <input type="text" id="cost-to-generate" readonly>
+          </label>
+          <label>Time To Generate:
+            <input type="text" id="time-to-generate" readonly>
+          </label>
+          <label>Feedback:
+            <textarea id="feedback" readonly></textarea>
+          </label>
+        </section>
+        <button type="submit">Submit Changes</button>
+      </form>
+      <div id="message"></div>
+    </div>
+  </div>
+
+  <script>
+    // Simulated product data
+    const dummyProducts = [
+      {
+        barcode: "069000149171",
+        name: "limebubly",
+        brand: "Bubly",
+        parentCompany: {
+          name: "PepsiCo",
+          description: "PepsiCo is a global leader in the food and beverage industry.",
+          countryOfRegistration: "United States",
+          countryCode: "US",
+          resultConfidence: "High",
+          explanation: "Consistently reported across multiple sources.",
+          tags: ["Beverages"]
+        },
+        manufacturingInfo: {
+          percentageCanadian: 70,
+          label: "Made in Canada",
+          labelDescription: "Product transformed in Canada",
+          manufacturingResultConfidence: "Medium",
+          labelExplanation: "Based on production facilities info."
+        },
+        metadata: {
+          imageURL: "https://nicholas-afonin.github.io/noimageimage.png",
+          verified: false,
+          numScans: 15,
+          positiveRatings: 2,
+          negativeRatings: 0,
+          sponsored: false,
+          dateGenerated: "2025-03-12T22:47:55.868823+00:00",
+          costToGenerate: "$0",
+          timeToGenerate: "1s",
+          feedback: "N/A",
+          productExists: true
+        },
+        tags: ["Bubly", "Lime", "Sparkling Water"]
+      },
+      {
+        barcode: "0069000149188",
+        name: "Bubly Lime Flavoured Sparkling Water",
+        brand: "Bubly",
+        parentCompany: {
+          name: "PepsiCo",
+          description: "PepsiCo is a global leader in the food and beverage industry.",
+          countryOfRegistration: "United States",
+          countryCode: "US",
+          resultConfidence: "High",
+          explanation: "Based on verified sources.",
+          tags: ["Beverages"]
+        },
+        manufacturingInfo: {
+          percentageCanadian: 88,
+          label: "Made in Canada",
+          labelDescription: "High Canadian content",
+          manufacturingResultConfidence: "High",
+          labelExplanation: "Local manufacturing data confirmed."
+        },
+        metadata: {
+          imageURL: "https://m.media-amazon.com/images/I/41HcfK9XopL._BO30,255,255,255_UF900,850_SR1910,1000,0,C_ZA1%252C053,500,900,420,420,AmazonEmber,50,4,0,0_PIRIOFOURANDHALF-medium,BottomLeft,30,-20_QL100_.jpg",
+          verified: true,
+          numScans: 25,
+          positiveRatings: 10,
+          negativeRatings: 1,
+          sponsored: true,
+          dateGenerated: "2025-03-10T18:20:00.000Z",
+          costToGenerate: "$5",
+          timeToGenerate: "2s",
+          feedback: "Reviewed by team.",
+          productExists: true
+        },
+        tags: ["Bubly", "Lime", "Sparkling Water"]
+      },
+      // Add more dummy products as needed
+      {
+        barcode: "0069000158203",
+        name: "Bubly Sparkling Water Blackberry 355ml",
+        brand: "Bubly",
+        parentCompany: {
+          name: "PepsiCo",
+          description: "PepsiCo is a global leader in the food and beverage industry.",
+          countryOfRegistration: "United States",
+          countryCode: "US",
+          resultConfidence: "High",
+          explanation: "Based on verified sources.",
+          tags: ["Beverages"]
+        },
+        manufacturingInfo: {
+          percentageCanadian: 85,
+          label: "Made in Canada",
+          labelDescription: "Moderate Canadian content",
+          manufacturingResultConfidence: "Medium",
+          labelExplanation: "Approximately 85% Canadian ingredients."
+        },
+        metadata: {
+          imageURL: "https://pureketo.ca/wp-content/uploads/2021/06/BUBLY-MURE.png",
+          verified: false,
+          numScans: 10,
+          positiveRatings: 3,
+          negativeRatings: 2,
+          sponsored: false,
+          dateGenerated: "2025-03-11T12:00:00.000Z",
+          costToGenerate: "$3",
+          timeToGenerate: "1.5s",
+          feedback: "No issues.",
+          productExists: true
+        },
+        tags: ["Bubly", "Blackberry", "Sparkling Water"]
+      }
+    ];
+
+    // Variables to track pagination and filters
+    let currentPage = 1;
+    const productsPerPage = 2;
+    let filteredProducts = [...dummyProducts];
+    let selectedSort = "";
+
+    // Utility: Render the product list based on filters and pagination
+    function renderProductList() {
+      const listContainer = document.getElementById('product-list');
+      listContainer.innerHTML = "";
+      // Apply pagination
+      const start = 0;
+      const end = currentPage * productsPerPage;
+      const productsToDisplay = filteredProducts.slice(start, end);
+
+      productsToDisplay.forEach(product => {
+        const item = document.createElement('div');
+        item.className = "product-item";
+        item.dataset.barcode = product.barcode;
+        item.innerHTML = `
+          <img src="${product.metadata.imageURL}" alt="${product.name}">
+          <div class="product-details">
+            <p><strong>${product.name}</strong></p>
+            <p>Verified: ${product.metadata.verified ? "Yes" : "No"}</p>
+            <p>+${product.metadata.positiveRatings} / -${product.metadata.negativeRatings}</p>
+            <p>${product.metadata.sponsored ? "Sponsored" : ""}</p>
+          </div>
+        `;
+        // Click handler to load product into form
+        item.addEventListener('click', () => {
+          document.querySelectorAll('.product-item').forEach(el => el.classList.remove('selected'));
+          item.classList.add('selected');
+          loadProductIntoForm(product);
+        });
+        listContainer.appendChild(item);
+      });
+    }
+
+    // Utility: Load product data into the editing form
+    function loadProductIntoForm(product) {
+      // Product Info
+      document.getElementById('product-barcode').value = product.barcode;
+      document.getElementById('product-name').value = product.name;
+      document.getElementById('product-brand').value = product.brand;
+      document.getElementById('product-tags').value = product.tags.join(", ");
+      // Parent Company Info
+      document.getElementById('parent-company-name').value = product.parentCompany.name;
+      document.getElementById('parent-company-description').value = product.parentCompany.description;
+      document.getElementById('parent-company-country').value = product.parentCompany.countryOfRegistration;
+      document.getElementById('parent-company-code').value = product.parentCompany.countryCode;
+      document.getElementById('parent-company-confidence').value = product.parentCompany.resultConfidence;
+      document.getElementById('parent-company-explanation').value = product.parentCompany.explanation;
+      document.getElementById('company-tags').value = product.parentCompany.tags ? product.parentCompany.tags.join(", ") : "";
+      // Manufacturing Info
+      document.getElementById('percentage-canadian').value = product.manufacturingInfo.percentageCanadian;
+      document.getElementById('label').value = product.manufacturingInfo.label;
+      document.getElementById('label-description').value = product.manufacturingInfo.labelDescription;
+      document.getElementById('manufacturing-confidence').value = product.manufacturingInfo.manufacturingResultConfidence;
+      document.getElementById('label-explanation').value = product.manufacturingInfo.labelExplanation;
+      // Metadata
+      document.getElementById('image-url').value = product.metadata.imageURL;
+      document.getElementById('verified').checked = product.metadata.verified;
+      document.getElementById('sponsored').checked = product.metadata.sponsored;
+      document.getElementById('num-scans').value = product.metadata.numScans;
+      document.getElementById('positive-ratings').value = product.metadata.positiveRatings;
+      document.getElementById('negative-ratings').value = product.metadata.negativeRatings;
+      document.getElementById('product-exists').checked = product.metadata.productExists;
+      // Read-Only Metadata
+      document.getElementById('date-generated').value = product.metadata.dateGenerated;
+      document.getElementById('cost-to-generate').value = product.metadata.costToGenerate;
+      document.getElementById('time-to-generate').value = product.metadata.timeToGenerate;
+      document.getElementById('feedback').value = product.metadata.feedback;
+    }
+
+    // Utility: Apply search filters
+    function applyFilters() {
+      const barcodeFilter = document.getElementById('search-barcode').value.toLowerCase();
+      const productFilter = document.getElementById('search-product').value.toLowerCase();
+      const parentFilter = document.getElementById('search-parent').value.toLowerCase();
+      filteredProducts = dummyProducts.filter(product => {
+        const matchesBarcode = product.barcode.toLowerCase().includes(barcodeFilter);
+        const matchesProduct = product.name.toLowerCase().includes(productFilter);
+        const matchesParent = product.parentCompany.name.toLowerCase().includes(parentFilter);
+        return matchesBarcode && matchesProduct && matchesParent;
+      });
+      // Apply sort filter if one is selected
+      if(selectedSort) {
+        filteredProducts.sort((a, b) => {
+          switch(selectedSort) {
+            case "recent":
+              return new Date(b.metadata.dateGenerated) - new Date(a.metadata.dateGenerated);
+            case "popular":
+              return b.metadata.positiveRatings - a.metadata.positiveRatings;
+            case "canadian":
+              return b.manufacturingInfo.percentageCanadian - a.manufacturingInfo.percentageCanadian;
+            case "verified":
+              return (b.metadata.verified === a.metadata.verified)? 0 : (b.metadata.verified ? -1 : 1);
+            case "sponsored":
+              return (b.metadata.sponsored === a.metadata.sponsored)? 0 : (b.metadata.sponsored ? -1 : 1);
+            default:
+              return 0;
+          }
+        });
+      }
+      currentPage = 1; // Reset pagination
+      renderProductList();
+    }
+
+    // Event listeners for search inputs
+    document.getElementById('search-barcode').addEventListener('input', applyFilters);
+    document.getElementById('search-product').addEventListener('input', applyFilters);
+    document.getElementById('search-parent').addEventListener('input', applyFilters);
+
+    // Event listeners for sort buttons
+    document.querySelectorAll('.sort-filters button').forEach(button => {
+      button.addEventListener('click', () => {
+        selectedSort = button.dataset.sort;
+        // Highlight the active button
+        document.querySelectorAll('.sort-filters button').forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        applyFilters();
+      });
+    });
+
+    // Load More button
+    document.getElementById('load-more').addEventListener('click', () => {
+      currentPage++;
+      renderProductList();
+    });
+
+    // Form submission handler
+    document.getElementById('product-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      // Gather updated product data
+      const updatedProduct = {
+        barcode: document.getElementById('product-barcode').value,
+        product_name: document.getElementById('product-name').value,
+        brand: document.getElementById('product-brand').value,
+        product_tags: document.getElementById('product-tags').value.split(",").map(tag => tag.trim()),
+        new_parent_company_name: document.getElementById('parent-company-name').value,
+        parent_company_description: document.getElementById('parent-company-description').value,
+        parent_company_country_of_registration: document.getElementById('parent-company-country').value,
+        parent_company_country_code: document.getElementById('parent-company-code').value,
+        parent_company_result_confidence: document.getElementById('parent-company-confidence').value,
+        parent_company_explanation: document.getElementById('parent-company-explanation').value,
+        company_tags: document.getElementById('company-tags').value.split(",").map(tag => tag.trim()),
+        percentage_canadian: document.getElementById('percentage-canadian').value,
+        label: document.getElementById('label').value,
+        label_description: document.getElementById('label-description').value,
+        manufacturing_result_confidence: document.getElementById('manufacturing-confidence').value,
+        label_explanation: document.getElementById('label-explanation').value,
+        image_url: document.getElementById('image-url').value,
+        verified: document.getElementById('verified').checked,
+        sponsored: document.getElementById('sponsored').checked,
+        num_scans: document.getElementById('num-scans').value,
+        positive_ratings: document.getElementById('positive-ratings').value,
+        negative_ratings: document.getElementById('negative-ratings').value,
+        product_exists: document.getElementById('product-exists').checked,
+        // Read-only fields (feedback, cost/time to generate) are not editable.
+      };
+      // Simulate an API call with setTimeout
+      setTimeout(() => {
+        // Simulate a successful update
+        document.getElementById('message').textContent = "Product updated successfully!";
+        document.getElementById('message').style.color = "green";
+      }, 500);
+    });
+
+    // Initial render
+    renderProductList();
+  </script>
+</body>
+</html>
